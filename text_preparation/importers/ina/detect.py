@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 
 METADATA_FILENAME = "ina_metadata.json"
 
-INAIssueDir = namedtuple("IssueDirectory", ["alias", "date", "edition", "path", "metadata_file"])
+INAIssueDir = namedtuple(
+    "IssueDirectory", ["provider", "alias", "date", "edition", "path", "metadata_file"]
+)
 """A light-weight data structure to represent a radio audio broadcast issue.
 
 This named tuple contains basic metadata about a newspaper issue. They
@@ -27,6 +29,7 @@ Note:
     second, etc.
 
 Args:
+    provider (str): Provider for this alias, here always "INA"
     alias (str): Bulletin alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
@@ -34,6 +37,7 @@ Args:
 
 >>> from datetime import date
 >>> i = INAIssueDir(
+    provider='INA',
     alias='SOC_CJ', 
     date=datetime.date(1940, 07, 22), 
     edition='a', 
@@ -68,6 +72,7 @@ def dir2issue(path: str, metadata_file_path: str) -> INAIssueDir | None:
     edition = "a"
 
     return INAIssueDir(
+        provider="INA",
         alias=alias,
         date=issue_date,
         edition=edition,

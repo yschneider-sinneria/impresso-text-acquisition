@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 EDITIONS_MAPPINGS = {1: "a", 2: "b", 3: "c", 4: "d", 5: "e"}
 
-Rero2IssueDir = namedtuple("IssueDirectory", ["alias", "date", "edition", "path"])
+Rero2IssueDir = namedtuple("IssueDirectory", ["provider", "alias", "date", "edition", "path"])
 """A light-weight data structure to represent a newspaper issue.
 
 This named tuple contains basic metadata about a newspaper issue. They
@@ -26,13 +26,14 @@ Note:
     second, etc.
 
 Args:
+    provider (str): Provider for this alias, here always "SNL"
     alias (str): Newspaper alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
     path (str): Path to the directory containing the issue's OCR data.
 
 >>> from datetime import date
->>> i = Rero2IssueDir('BLB', date(1845,12,28), 'a', './BLB/data/BLB/18451228_01')
+>>> i = Rero2IssueDir('SNL', 'BLB', date(1845,12,28), 'a', './BLB/data/BLB/18451228_01')
 """
 
 
@@ -53,6 +54,7 @@ def dir2issue(path: str) -> Rero2IssueDir:
     edition = EDITIONS_MAPPINGS[int(edition)]
 
     return Rero2IssueDir(
+        provider="SNL",
         alias=alias,
         date=date,
         edition=edition,

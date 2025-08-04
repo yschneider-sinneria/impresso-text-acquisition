@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 EDITIONS_MAPPINGS = {1: "a", 2: "b", 3: "c", 4: "d", 5: "e"}
 
-BlIssueDir = namedtuple("IssueDirectory", ["alias", "date", "edition", "path"])
+BlIssueDir = namedtuple("IssueDirectory", ["provider", "alias", "date", "edition", "path"])
 """A light-weight data structure to represent a newspaper issue.
 
 # TODO add NLP?
@@ -31,6 +31,7 @@ Note:
     second, etc.
 
 Args:
+    provider (str): Provider for this alias, here always "BL"
     alias (str): Newspaper alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
@@ -38,6 +39,7 @@ Args:
 
 >>> from datetime import date
 >>> i = BlIssueDir(
+    provider='BL',
     alias='0002088', 
     date=datetime.date(1832, 11, 23), 
     edition='a', 
@@ -142,6 +144,7 @@ def dir2issue(path: str) -> BlIssueDir | None:
     month, day = int(month_day[:2]), int(month_day[2:])
 
     return BlIssueDir(
+        provider="BL",
         alias=alias,
         date=date(year, month, day),
         edition="a",

@@ -8,16 +8,16 @@ import os
 import copy
 import logging
 import time
-from operator import itemgetter
-from time import strftime
 from enum import Enum
+from operator import itemgetter
+
 from typing import Any
 
 import numpy as np
 from bs4 import BeautifulSoup
 import cv2 as cv
 
-from impresso_essentials.utils import IssueDir, SourceMedium, SourceType, timestamp
+from impresso_essentials.utils import IssueDir
 from text_preparation.importers.classes import CanonicalIssue, ZipArchive
 from text_preparation.tokenization import insert_whitespace
 

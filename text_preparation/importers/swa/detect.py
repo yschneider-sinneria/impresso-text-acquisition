@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 SwaIssueDir = namedtuple(
     "IssueDirectory",
     [
+        "provider",
         "alias",
         "date",
         "edition",
@@ -36,6 +37,7 @@ Note:
     second, etc.
 
 Args:
+    provider (str): Provider for this alias, here always "SWA"
     alias (str): Newspaper alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
@@ -45,6 +47,7 @@ Args:
 
 >>> from datetime import date
 >>> i = IssueDirectory(
+        provider="SWA",
         alias='arbeitgeber', 
         date=datetime.date(1908, 7, 4), 
         edition='a', 
@@ -135,6 +138,7 @@ def _get_issuedir(row: pd.Series, journal_root: str) -> Optional[SwaIssueDir]:
                 alias, year, mo, day, edition = split
                 pub_date = date(int(year), int(mo), int(day))
                 return SwaIssueDir(
+                    "SWA",
                     alias,
                     pub_date,
                     edition,

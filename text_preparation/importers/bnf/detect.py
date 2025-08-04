@@ -1,6 +1,5 @@
 """This module contains helper functions to find BNF OCR data to import."""
 
-import json
 import logging
 import os
 import string
@@ -16,7 +15,9 @@ from text_preparation.importers.detect import _apply_datefilter
 
 logger = logging.getLogger(__name__)
 
-BnfIssueDir = namedtuple("IssueDirectory", ["alias", "date", "edition", "path", "secondary_date"])
+BnfIssueDir = namedtuple(
+    "IssueDirectory", ["provider", "alias", "date", "edition", "path", "secondary_date"]
+)
 """A light-weight data structure to represent a newspaper issue.
 
 This named tuple contains basic metadata about a newspaper issue. They
@@ -34,6 +35,7 @@ Note:
     either `-` or `/`.
 
 Args:
+    provider (str): Provider for this alias, here always "BNF"
     alias (str): Newspaper alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
@@ -42,6 +44,7 @@ Args:
 
 >>> from datetime import date
 >>> i = BnfIssueDir(
+    provider='BNF',
     alias='Marie-Claire', 
     date=datetime.date(1938, 3, 11), 
     edition='a', 

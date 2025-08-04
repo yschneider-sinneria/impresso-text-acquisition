@@ -28,7 +28,13 @@ import jsonlines
 from dask import bag as db
 from dask.distributed import Client
 from filelock import FileLock
-from impresso_essentials.utils import IssueDir, chunk, PARTNER_TO_MEDIA, get_src_info_for_alias
+from impresso_essentials.utils import (
+    IssueDir,
+    chunk,
+    PARTNER_TO_MEDIA,
+    get_src_info_for_alias,
+    get_provider_for_alias,
+)
 from impresso_essentials.io.fs_utils import canonical_path
 from impresso_essentials.io.s3 import get_s3_resource
 from impresso_essentials.versioning.data_manifest import DataManifest
@@ -338,6 +344,7 @@ def import_issues(
     manifest: DataManifest,
     client: Client | None = None,
     is_audio: bool | None = False,
+    provider: str | None = None,
 ) -> None:
     """Import a bunch of canonical issues (newspaper or radio-broadcast).
 
@@ -355,6 +362,7 @@ def import_issues(
         manifest (DataManifest): Data manifest instance, tracking the stats on the imported data.
         client (Client | None, optional): Dask client. Defaults to None.
         is_audio (bool | None, optional): The if the data being imported is audio. Defaults to False.
+        provider (str | None, optional): The provider of the data being ingested, if possible.
     """
     supports_name = "audios" if is_audio else "pages"
     print(f"supports_name: {supports_name}")
@@ -421,6 +429,8 @@ def import_issues(
                 np_year.split("-")[0],
                 np_year.split("-")[1],
                 yearly_stats,
+                src_medium="audio" if is_audio else "print",
+                provider=provider,
             )
             # remove the yearly stats from the filenames
             compressed_issue_files[index] = (np_year, filepath)
@@ -438,7 +448,9 @@ def import_issues(
 
         (
             db.from_sequence(set(compressed_issue_files))
-            .starmap(upload_issues, bucket_name=s3_bucket, failed_log=failed_log_path)
+            .starmap(
+                upload_issues, provider=provider, bucket_name=s3_bucket, failed_log=failed_log_path
+            )
             .starmap(cleanup)
             .compute()
         )
@@ -485,6 +497,7 @@ def import_issues(
                 )
                 .starmap(
                     upload_supports,
+                    provider=provider,
                     bucket_name=s3_bucket,
                     failed_log=failed_log_path,
                     supports_name=supports_name,
@@ -658,6 +671,7 @@ def compress_issues(
 def upload_issues(
     sort_key: str,
     filepath: str,
+    provider: str | None = None,
     bucket_name: str | None = None,
     failed_log: str | None = None,
 ) -> Tuple[bool, str]:
@@ -668,6 +682,8 @@ def upload_issues(
     Args:
         sort_key (str): Key used to group articles (e.g. "GDL-1900").
         filepath (str): Path of the file to upload to S3.
+        provider (str | None, optional): Name of the alias' provider to include in s3 path.
+            the file. Defaults to None.
         bucket_name (str | None, optional): Name of S3 bucket where to upload
             the file. Defaults to None.
         failed_log (str | None, optional): Path to file where to log errors.
@@ -679,7 +695,11 @@ def upload_issues(
     # create connection with bucket
     # copy contents to s3 key
     alias, _ = sort_key.split("-")
-    key_name = os.path.join(alias, "issues", os.path.basename(filepath))
+
+    if not provider:
+        provider = get_provider_for_alias(alias)
+
+    key_name = os.path.join(provider, alias, "issues", os.path.basename(filepath))
     # key_name = "{}/{}/{}".format(alias, "issues", os.path.basename(filepath))
     s3 = get_s3_resource()
     if bucket_name is not None:
@@ -699,6 +719,7 @@ def upload_issues(
 def upload_supports(
     sort_key: str,
     filepath: str,
+    provider: str | None = None,
     bucket_name: str | None = None,
     failed_log: str | None = None,
     supports_name: str | None = None,
@@ -708,6 +729,8 @@ def upload_supports(
     Args:
         sort_key (str): the key used to group articles (e.g. "GDL-1900-01-01-a").
         filepath (str): Path of the file to upload to S3.
+        provider (str | None, optional): Name of the alias' provider to include in s3 path.
+            the file. Defaults to None.
         bucket_name (str | None, optional): Name of S3 bucket where to upload
             the file. Defaults to None.
         failed_log (str | None, optional): Path to file where to log errors.
@@ -719,7 +742,13 @@ def upload_supports(
     # create connection with bucket
     # copy contents to s3 key
     alias, year, _, _, _ = sort_key.split("-")
-    key_name = os.path.join(alias, supports_name, f"{alias}-{year}", os.path.basename(filepath))
+
+    if not provider:
+        provider = get_provider_for_alias(alias)
+
+    key_name = os.path.join(
+        provider, alias, supports_name, f"{alias}-{year}", os.path.basename(filepath)
+    )
     # key_name = "{}/pages/{}/{}".format(alias, f"{alias}-{year}", os.path.basename(filepath))
     # or key_name = "{}/audios/{}/{}".format(alias, f"{alias}-{year}", os.path.basename(filepath))
     s3 = get_s3_resource()
