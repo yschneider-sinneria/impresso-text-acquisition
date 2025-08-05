@@ -47,6 +47,7 @@ class CanonicalIssue(ABC):
 
     def __init__(self, issue_dir: IssueDir) -> None:
         self.id = canonical_path(issue_dir)
+        self.provider = issue_dir.provider
         self.edition = issue_dir.edition
         self.alias = issue_dir.alias
         self.path = issue_dir.path
@@ -70,7 +71,7 @@ class CanonicalIssue(ABC):
     @property
     def issuedir(self) -> IssueDir:
         """`IssueDir`: IssueDirectory corresponding to this issue."""
-        return IssueDir(self.alias, self.date, self.edition, self.path)
+        return IssueDir(self.provider, self.alias, self.date, self.edition, self.path)
         # return IssueDir(self.alias, self.date, self.edition, self.src_type, self.src_medium, self.path)
 
     def validate(self) -> None:

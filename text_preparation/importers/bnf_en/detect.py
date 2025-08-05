@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 EDITIONS_MAPPINGS = {1: "a", 2: "b", 3: "c", 4: "d", 5: "e"}
 
-BnfEnIssueDir = namedtuple("IssueDirectory", ["alias", "date", "edition", "path", "ark_link"])
+BnfEnIssueDir = namedtuple(
+    "IssueDirectory", ["provider", "alias", "date", "edition", "path", "ark_link"]
+)
 """A light-weight data structure to represent a newspaper issue in BNF Europeana
 
 This named tuple contains basic metadata about a newspaper issue. They
@@ -30,6 +32,7 @@ Note:
     second, etc.
 
 Args:
+    provider (str): Provider for this alias, here always "BNF"
     alias (str): Newspaper alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
@@ -37,7 +40,7 @@ Args:
     ark_link (str): Unique IIIF identifier associated with this issue.
 
 >>> from datetime import date
->>> i = BnfEnIssueDir('BLB', date(1845,12,28), 'a', './Le-Gaulois/18820208_1')
+>>> i = BnfEnIssueDir("BNF", 'BLB', date(1845,12,28), 'a', './Le-Gaulois/18820208_1')
 """
 
 API_JOURNAL_URL = "https://gallica.bnf.fr/services/Issues?ark={ark}/date"
@@ -324,6 +327,7 @@ def dir2issue(path: str, iiif_arks: dict[str, str]) -> BnfEnIssueDir | None:
         return None
 
     return BnfEnIssueDir(
+        provider="BNF",
         alias=alias,
         date=date,
         edition=edition,

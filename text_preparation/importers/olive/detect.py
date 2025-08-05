@@ -9,7 +9,7 @@ from text_preparation.importers.detect import (
     select_issues,
 )
 
-OliveIssueDir = namedtuple("OliveIssueDirectory", ["journal", "date", "edition", "path"])
+OliveIssueDir = namedtuple("OliveIssueDirectory", ["provider", "alias", "date", "edition", "path"])
 """A light-weight data structure to represent a newspaper issue.
 
 This named tuple contains basic metadata about a newspaper issue. They
@@ -22,13 +22,14 @@ Note:
     second, etc.
 
 Args:
-    journal (str): Newspaper ID.
+    provider (str): Provider for this alias, here always "LeTemps" or "SNL".
+    alias (str): Newspaper ID.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
     path (str): Path to the directory containing the issue's OCR data.
 
 >>> from datetime import date
->>> i = OliveIssueDir('GDL', date(1900,1,1), 'a', './GDL-1900-01-01/')
+>>> i = OliveIssueDir('LeTemps','GDL', date(1900,1,1), 'a', './GDL-1900-01-01/')
 """
 
 
@@ -46,7 +47,9 @@ def dir2olivedir(issue_dir: IssueDir) -> OliveIssueDir:
         OliveIssueDir: New ``OliveIssueDir`` object.
     """
 
-    return OliveIssueDir(issue_dir.journal, issue_dir.date, issue_dir.edition, issue_dir.path)
+    return OliveIssueDir(
+        issue_dir.provider, issue_dir.alias, issue_dir.date, issue_dir.edition, issue_dir.path
+    )
 
 
 def olive_detect_issues(

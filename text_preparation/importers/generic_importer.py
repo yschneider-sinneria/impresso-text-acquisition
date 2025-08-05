@@ -2,7 +2,7 @@
 Functions and CLI script to convert any OCR data into Impresso's format.
 
 Usage:
-    <importer-name>importer.py --input-dir=<id> (--clear | --incremental) [--output-dir=<od> --image-dirs=<imd> --temp-dir=<td> --chunk-size=<cs> --s3-bucket=<b> --config-file=<cf> --log-file=<f> --verbose --scheduler=<sch> --git-repo=<gr> --num-workers=<nw> --dont-push-manifest --is-audio]
+    <importer-name>importer.py --input-dir=<id> (--clear | --incremental) [--output-dir=<od> --image-dirs=<imd> --temp-dir=<td> --chunk-size=<cs> --provider=<p> --s3-bucket=<b> --config-file=<cf> --log-file=<f> --verbose --scheduler=<sch> --git-repo=<gr> --num-workers=<nw> --dont-push-manifest --is-audio]
     <importer-name>importer.py --version
 
 Options:
@@ -15,6 +15,7 @@ Options:
     --scheduler=<sch>   Tell dask to use an existing scheduler (otherwise it'll create one)
     --log-file=<f>      Log file; when missing print log to stdout
     --chunk-size=<cs>   Chunk size in years used to group issues when importing
+    --provider=<p>      Data provider corresponding to the data being ingested, if possible.
     --git-repo=<gr>   Local path to the "impresso-text-acquisition" git directory (including it).
     --num-workers=<nw>  Number of workers to use for local dask cluster
     --dont-push-manifest  Whether to push the generated manifest to github (will push if not specified)
@@ -36,7 +37,7 @@ from typing import Any, Type, Callable
 from dask.distributed import Client
 from docopt import docopt
 import git
-from impresso_essentials.utils import IssueDir
+from impresso_essentials.utils import IssueDir, PARTNER_TO_MEDIA
 from impresso_essentials.versioning.data_manifest import DataManifest
 from impresso_essentials.utils import init_logger
 
@@ -159,6 +160,26 @@ def apply_select_func(
     return select_func(input_dir, config=config)
 
 
+def deduce_prov_from_dirname(dirname: str) -> str | None:
+    # most base dirs are actually the name of the provider
+    if dirname in PARTNER_TO_MEDIA:
+        return dirname
+
+    # sometimes the name of the provider is included in the dirname
+    for prov in PARTNER_TO_MEDIA:
+        if prov in dirname:
+            return prov
+
+    # handle specific cases
+    if "RERO" in dirname:
+        return "SNL"
+    if dirname in ["JDG", "GDL"]:
+        return "LeTemps"
+    if dirname == "UZH":
+        return "tetml"  # will be overwritten later
+    return None
+
+
 def main(
     issue_class: CanonicalIssue,
     detect_func: Callable[[str, str], list[IssueDir]],
@@ -188,6 +209,7 @@ def main(
     out_bucket = args["--s3-bucket"]
     log_file = args["--log-file"]
     chunk_size = args["--chunk-size"]
+    provider = args["--provider"] if args["--provider"] else None
     scheduler = args["--scheduler"]
     clear_output = args["--clear"]
     incremental_output = args["--incremental"]
@@ -214,6 +236,9 @@ def main(
     # Checks if out dir exists (Creates it if not) and if should empty it
     clear_output_dir(outp_dir, clear_output)
 
+    if not provider:
+        provider = deduce_prov_from_dirname(os.path.basename(inp_dir.rstrip("/")))
+
     # detect/select issues
     if config_file and os.path.isfile(config_file):
         logger.info("Found config file: %s", os.path.realpath(config_file))
@@ -239,8 +264,8 @@ def main(
 
     if outp_dir is not None and os.path.exists(outp_dir) and incremental_output:
         issues_to_skip = [
-            (issue.alias, issue.date, issue.edition)
-            for issue in detect_issues(outp_dir, w_edition=True)
+            (issue.provider, issue.alias, issue.date, issue.edition)
+            for issue in detect_issues(outp_dir, w_edition=True, provider=provider)
         ]
         logger.debug("Issues to skip: %s", issues_to_skip)
         logger.info("%s issues to skip", len(issues_to_skip))
@@ -281,4 +306,5 @@ def main(
         manifest,
         client,
         is_audio,
+        provider,
     )
