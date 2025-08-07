@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 METADATA_FILENAME = "SOC_rb_metadata.json"
 
 SwissInfoIssueDir = namedtuple(
-    "IssueDirectory", ["alias", "date", "edition", "path", "metadata_file"]
+    "IssueDirectory", ["provider", "alias", "date", "edition", "path", "metadata_file"]
 )
 """A light-weight data structure to represent a radio bulletin issue.
 
@@ -28,6 +28,7 @@ Note:
     second, etc.
 
 Args:
+    provider (str): Provider for this alias, here always "SWISSINFO"
     alias (str): Bulletin alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
@@ -35,6 +36,7 @@ Args:
 
 >>> from datetime import date
 >>> i = SwissInfoIssueDir(
+    provider='SWISSINFO',
     alias='SOC_CJ', 
     date=datetime.date(1940, 07, 22), 
     edition='a', 
@@ -63,6 +65,7 @@ def dir2issue(path: str, metadata_file_path: str) -> SwissInfoIssueDir | None:
     edition = split_path[-1]
 
     return SwissInfoIssueDir(
+        provider="SWISSINFO",
         alias=alias,
         date=issue_date,
         edition=edition,

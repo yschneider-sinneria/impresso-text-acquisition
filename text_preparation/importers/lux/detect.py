@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 EDITIONS_MAPPINGS = {1: "a", 2: "b", 3: "c", 4: "d", 5: "e"}
 
-LuxIssueDir = namedtuple("IssueDirectory", ["alias", "date", "edition", "path"])
+LuxIssueDir = namedtuple("IssueDirectory", ["provider", "alias", "date", "edition", "path"])
 """A light-weight data structure to represent a newspaper issue.
 
 This named tuple contains basic metadata about a newspaper issue. They
@@ -25,13 +25,14 @@ Note:
     second, etc.
 
 Args:
+    provider (str): Provider for this alias, here always "BNL"
     alias (str): Newspaper alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
     path (str): Path to the directory containing the issue's OCR data.
 
 >>> from datetime import date
->>> i = LuxIssueDir('armeteufel', date(1904,1,17), 'a', './protected_027/1497608_newspaper_armeteufel_1904-01-17/')
+>>> i = LuxIssueDir('BNL','armeteufel', date(1904,1,17), 'a', './protected_027/1497608_newspaper_armeteufel_1904-01-17/')
 """
 
 
@@ -57,7 +58,7 @@ def dir2issue(path: str) -> LuxIssueDir:
         edition = issue_dir.split("_")[4]
         edition = EDITIONS_MAPPINGS[int(edition)]
 
-    return LuxIssueDir(local_id, date(int(year), int(month), int(day)), edition, path)
+    return LuxIssueDir("BNL", local_id, date(int(year), int(month), int(day)), edition, path)
 
 
 def detect_issues(base_dir: str) -> list[LuxIssueDir]:

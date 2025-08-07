@@ -4,7 +4,7 @@ import os
 import logging
 from typing import Any
 from datetime import date, datetime
-from impresso_essentials.utils import IssueDir, ALL_MEDIA
+from impresso_essentials.utils import IssueDir, ALL_MEDIA, PARTNER_TO_MEDIA, get_provider_for_alias
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +129,7 @@ def detect_issues(
     alias_filter: list[str] | None = None,
     exclude: bool = False,
     w_edition: bool = False,
+    provider: str | None = None,
 ) -> list[IssueDir]:
     """Parse a directory structure and detect issues to be imported.
 
@@ -167,9 +168,13 @@ def detect_issues(
 
     for alias in media_title_dirs:
         alias_path = os.path.join(base_dir, alias)
-        # for SWISSINFOr, '_' is part of the alias
+        # for SWISSINFO, '_' is part of the alias
         alias = alias.split("_")[-1] if "_" in alias and "SOC" not in alias else alias
         _, year_dirs, _ = next(os.walk(alias_path))
+
+        # in the case the provider is not given incorrect for this alias, fix it
+        if not provider or alias not in PARTNER_TO_MEDIA[provider]:
+            provider = get_provider_for_alias(alias)
 
         for year in year_dirs:
             year_path = os.path.join(alias_path, year)
@@ -187,8 +192,10 @@ def detect_issues(
                         _, edition_dirs, _ = next(os.walk(day_path))
                         for edition in edition_dirs:
                             edition_path = os.path.join(day_path, edition)
+
                             try:
                                 detected_issue = IssueDir(
+                                    provider,
                                     alias,
                                     date(int(year), int(month), int(day)),
                                     edition,
@@ -205,6 +212,7 @@ def detect_issues(
                             # may come later on)
                             # TODO correct in the future when working with dir structures like this
                             detected_issue = IssueDir(
+                                provider,
                                 alias,
                                 date(int(year), int(month), int(day)),
                                 "a",

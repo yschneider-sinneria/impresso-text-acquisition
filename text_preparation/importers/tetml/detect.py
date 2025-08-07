@@ -3,14 +3,12 @@
 from collections import namedtuple
 from typing import List
 
-from impresso_essentials.utils import IssueDir
-
 from text_preparation.importers.detect import (
     detect_issues,
     select_issues,
 )
 
-TetmlIssueDir = namedtuple("TetmlIssueDirectory", ["alias", "date", "edition", "path"])
+TetmlIssueDir = namedtuple("TetmlIssueDirectory", ["provider", "alias", "date", "edition", "path"])
 
 """A light-weight data structure to represent a newspaper issue.
 
@@ -24,13 +22,14 @@ canonical identifiers for the issue and its pages.
     is used to indicate the edition number: 'a' for the first, 'b' for the
     second, etc.
 
+:param str provider: Provider for this alias, here always "NZZ" or "FedGaz"
 :param str alias: Newspaper alias
 :param datetime.date date: Publication date
 :param str edition: Edition of the newspaper issue ('a', 'b', 'c', etc.)
 :param str path: Path to the directory containing OCR data
 
 >>> from datetime import date
->>> i = TetmlIssueDir('GDL', date(1900,1,1), 'a', './GDL-1900-01-01/')
+>>> i = TetmlIssueDir('NZZ', 'NZZ', date(1900,1,1), 'a', './NZZ-1900-01-01/')
 """
 
 
@@ -50,7 +49,11 @@ def tetml_detect_issues(
 
     issues = detect_issues(base_dir, alias_filter=alias_filter, exclude=exclude)
 
-    return [TetmlIssueDir(x.alias, x.date, x.edition, x.path) for x in issues]
+    # all tetml data is in the same dir
+    return [
+        TetmlIssueDir("NZZ" if x.alias == "NZZ" else "FedGaz", x.alias, x.date, x.edition, x.path)
+        for x in issues
+    ]
 
 
 def tetml_select_issues(base_dir: str, config: dict) -> List[TetmlIssueDir]:
@@ -67,4 +70,7 @@ def tetml_select_issues(base_dir: str, config: dict) -> List[TetmlIssueDir]:
     """
     issues = select_issues(config, base_dir)
 
-    return [TetmlIssueDir(x.alias, x.date, x.edition, x.path) for x in issues]
+    return [
+        TetmlIssueDir("NZZ" if x.alias == "NZZ" else "FedGaz", x.alias, x.date, x.edition, x.path)
+        for x in issues
+    ]

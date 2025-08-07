@@ -13,7 +13,9 @@ from text_preparation.importers.bcul.helpers import parse_date, find_mit_file
 
 logger = logging.getLogger(__name__)
 
-BculIssueDir = namedtuple("IssueDirectory", ["alias", "date", "edition", "path", "mit_file_type"])
+BculIssueDir = namedtuple(
+    "IssueDirectory", ["provider", "alias", "date", "edition", "path", "mit_file_type"]
+)
 """A light-weight data structure to represent a newspaper issue.
 
 This named tuple contains basic metadata about a newspaper issue. They
@@ -26,6 +28,7 @@ Note:
     second, etc.
 
 Args:
+    provider (str): Provider for this alias, here always "BCUL"
     alias (str): Newspaper alias.
     date (datetime.date): Publication date or issue.
     edition (str): Edition of the newspaper issue ('a', 'b', 'c', etc.).
@@ -34,6 +37,7 @@ Args:
 
 >>> from datetime import date
 >>> i = BculIssueDir(
+    provider='BCUL',
     alias='FAL', 
     date=datetime.date(1762, 12, 07), 
     edition='a', 
@@ -116,6 +120,7 @@ def dir2issue(path: str, journal_info: dict[str, str]) -> BculIssueDir | None:
         edition = "a"
 
     return BculIssueDir(
+        provider="BL",
         alias=journal_info["alias"],
         date=date,
         edition=edition,
